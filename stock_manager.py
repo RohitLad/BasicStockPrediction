@@ -62,10 +62,10 @@ class stocker:
             self.data = web.DataReader(self.name,'yahoo',start_date,end_date)
             self.save_pickle()
         
-        start_date = min(start_date,self.data.index.min())
-        end_date = max(end_date,self.data.index.max())
-        l_s = self.create_offset_days(current_day=start_date, window=3)
-        l_e = self.create_offset_days(current_day=end_date, window=3, sign=-1)
+        #start_date = min(start_date,self.data.index.min())
+        #end_date = max(end_date,self.data.index.max())
+        #l_s = self.create_offset_days(current_day=start_date, window=3)
+        #l_e = self.create_offset_days(current_day=end_date, window=3, sign=-1)
 
         _,i,j = self.check_if_days_exist(self.data.index, l_s, l_e)
         self.block_dataset = self.data.loc[i:j,:]        
