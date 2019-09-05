@@ -14,12 +14,10 @@ stock_names = ['AAPL','TSLA','GOOG','MSFT']
 stock_dict = {}
 
 manager = stock_manager()
-for name in stock_names:
-    manager.insert_participant(name=name)
+manager.insert_ticker(names=stock_names)
+manager.set_time_frame(start_index=int(manager.size_database*0.5),days=500)
 
-manager.set_time_frame(start_date=start_date,end_date=end_date)
-combined = manager.combine_portfolios()
-returns = combined.pct_change()
+mvs = manager.moving_average(window=15)
 
-plt.scatter(returns['AAPL'],returns['GOOG'])
-plt.show()
+training_set = manager.generate_training_sets()
+manager.n_order_regression(dataset=training_set,order=2)
