@@ -52,11 +52,11 @@ class stock_manager:
             val[name]=self.portfolio[name].moving_average(window = window, key_val =key_val)
         return val
 
-    def generate_training_sets(self):
+    def generate_training_sets(self,ratio=0.05):
         val = {}
         for name in self.portfolio:
-            X,y = self.portfolio[name].generate_training_sets()
-            val[name]={'X':X,'y':y}
+            X,y,X_new,mean,var,X_dates,Xl_dates = self.portfolio[name].generate_training_sets(ratio=ratio)
+            val[name]={'X':X,'y':y,'X_lately':X_new,'mean':mean,'std':var,'X_dates':X_dates,'Xl_dates':Xl_dates}
         return val
 
     def linear_regression(self, dataset):
@@ -88,9 +88,10 @@ class stocker:
         else:
             self.data = pd.DataFrame(columns=['Open','High','Low','Close','Volume','Adj Close'])
             start_date = stock_manager.start_date
-        extra_data = self.load_from_web(start_date=start_date, end_date=today)
-        self.data = pd.concat([self.data,extra_data],axis=0)
+
+        extra_data = []#self.load_from_web(start_date=start_date, end_date=today)
         if len(extra_data)>0:
+            self.data = pd.concat([self.data,extra_data],axis=0)
             self.save_pickle()
 
         self.block_dataset = self.data
@@ -118,7 +119,6 @@ class stocker:
     def generate_training_sets1(self,ratio = 0.01, key_val='Adj Close'):
         dataset = self.block_dataset.copy(deep=True)
         forecast_out = int(np.ceil(ratio*len(dataset)))
-        forecast_col = key_val
         dataset['label'] = dataset[key_val].shift(-forecast_out)
         X = np.array(dataset.drop(['label'],1))
         X = scale(X)
@@ -126,16 +126,22 @@ class stocker:
         X = X[:-forecast_out]
         y=np.array[dataset['label']]
         y=y[:-forecast_out]
-        return X,y
+        return X,y,X_lately
 
     def generate_training_sets(self,ratio = 0.01, key_val='Adj Close'):
         dataset = self.block_dataset.copy(deep=True)
         forecast_out = int(np.ceil(ratio*len(dataset)))
         removed_chunk = dataset[key_val]
-        X = scale(np.array(removed_chunk))
+        X = np.array(removed_chunk)
+        mean = X.mean()
+        var = X.std()
+        X_dates = dataset.index[0:-forecast_out]
+        Xl_dates = dataset.index[-forecast_out:]
+        X = scale(X)
         y = X[forecast_out:]
+        X_lately = X[-forecast_out:].reshape(-1,1)
         X = X[:-forecast_out].reshape(-1,1)
-        return X,y
+        return X,y,X_lately,mean,var,X_dates,Xl_dates
 
 if __name__=='__main__':
     ak = stocker(name='AAPL')
